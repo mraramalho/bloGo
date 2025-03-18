@@ -1,0 +1,19 @@
+{{ define "content" }}
+<h2>Blog</h2>
+<p>
+  Últimos artigos sobre desenvolvimento backend, automação e infraestrutura.
+</p>
+<div class="row">
+  {{ range .Posts }}
+  <div class="col-md-4 mb-3">
+    <div class="card bg-secondary text-light">
+      <div class="card-body">
+        <h5 class="card-title">{{ .Title }}</h5>
+        <p class="card-text">{{ .Excerpt }}</p>
+        <a href="{{ .Slug }}" class="btn btn-light">Leia mais</a>
+      </div>
+    </div>
+  </div>
+  {{ end }}
+</div>
+{{ end }}

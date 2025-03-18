@@ -1,0 +1,32 @@
+html,
+body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  font-family: "Chakra Petch", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+  background-color: #13141f;
+}
+
+.content {
+  flex: 1;
+  /* Faz o conteúdo ocupar o espaço restante */
+  padding-top: 56px;
+  /* Ajusta para não ficar escondido atrás da navbar */
+}
+
+pre {
+  padding: 30px;
+  background-color: #13141f;
+  font-family: Poppins, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  padding-bottom: 15px;
+}

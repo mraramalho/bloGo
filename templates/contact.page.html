@@ -1,0 +1,25 @@
+{{ define "content" }}
+<h2>Contato</h2>
+<p>Entre em contato para discutir um projeto.</p>
+{{if .Error}}
+<div class="alert alert-danger">{{.Error}}</div>
+{{end}} {{if .Success}}
+<div class="alert alert-success">Sua mensagem foi enviada com sucesso!</div>
+{{end}}
+
+<form method="POST" action="/contact">
+  <div class="mb-3">
+    <label class="form-label">Nome</label>
+    <input type="text" class="form-control" name="name" required />
+  </div>
+  <div class="mb-3">
+    <label class="form-label">E-mail</label>
+    <input type="email" class="form-control" name="email" required />
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Mensagem</label>
+    <textarea class="form-control" name="message" rows="4" required></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Enviar</button>
+</form>
+{{ end }}
