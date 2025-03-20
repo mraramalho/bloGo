@@ -3,7 +3,10 @@ module github.com/mraramalho/bloGo
 go 1.23.5
 
 require (
+	github.com/alexedwards/scs/v2 v2.8.0
+	github.com/go-chi/chi/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1
+	github.com/justinas/nosurf v1.1.1
 	github.com/yuin/goldmark v1.7.8
 	gopkg.in/mail.v2 v2.3.1
 )
