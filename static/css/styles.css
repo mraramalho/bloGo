@@ -41,12 +41,64 @@ h6 {
   color: #ffffff;
 }
 
+.btn {
+  min-width: 150px !important;
+}
+
+.btn-tag {
+  background-color: #122b39;
+  color: #55d1c0;
+}
+
+.btn-tag:hover {
+  background-color: #55d1c0;
+  color: #ffff;
+}
+
+.card {
+  min-height: 400px !important;
+  position: relative;
+  background-color: rgba(85, 209, 192, 0.1);
+  color: rgb(85, 209, 192);
+}
+
+.card-button {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+}
+
 .content {
   flex: 1;
   /* Faz o conteúdo ocupar o espaço restante */
   padding-top: 56px;
   z-index: 1;
   /* Ajusta para não ficar escondido atrás da navbar */
+}
+
+/* Classe para caracteres individuais que receberão o efeito */
+.glow-char {
+  display: inline-block;
+  transition: color 0.2s ease;
+}
+
+/* Cores para o efeito de iluminação */
+.glow-active {
+  color: #55d1c0;
+  text-shadow: 0 0 8px rgba(85, 209, 192, 0.6);
+}
+
+.icons {
+  width: 60px;
+  height: 60px;
+  color: white !important;
+  transition: width 0.2s ease, height 0.2s ease, color 0.2s ease;
+}
+
+.icons:hover {
+  width: 65px;
+  height: 65px;
+  color: #55d1c0 !important;
 }
 
 .navbar {
@@ -88,22 +140,22 @@ h6 {
   box-shadow: 0 0 0 0.2rem rgba(85, 209, 192, 0.25) !important;
 }
 
-.btn {
-  min-width: 150px !important;
+.secondary-bg {
+  background-color: rgba(85, 209, 192, 0.25) !important;
+  box-shadow: 10px 10px 20px rgb(85, 209, 192, 0.08) !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  color: rgb(222, 238, 236) !important;
+  perspective: 1000px;
 }
 
-.btn-tag {
-  background-color: #122b39;
-  color: #55d1c0;
-}
-
-.btn-tag:hover {
-  background-color: #55d1c0;
-  color: #ffff;
+.secondary-bg:hover {
+  background-color: rgba(102, 107, 106, 0.1) !important;
+  color: rgb(85, 209, 192) !important;
+  box-shadow: none !important;
 }
 
 .spotlight-container {
-  min-height: 100vh; /* Altura total menos a altura da navbar */
+  min-height: 100vh;
 }
 
 .spotlight {
@@ -113,41 +165,8 @@ h6 {
   z-index: 0;
   pointer-events: none; /* Isso permite que os cliques passem através do spotlight */
 }
-
-.content {
-  z-index: 1; /* Garante que o conteúdo fique acima do spotlight */
-}
-
 /* Classe para texto com efeito de iluminação */
 .text-glow {
   transition: color 0.3s ease;
   position: relative;
-}
-
-/* Classe para caracteres individuais que receberão o efeito */
-.glow-char {
-  display: inline-block;
-  transition: color 0.2s ease;
-}
-
-/* Cores para o efeito de iluminação */
-.glow-active {
-  color: #55d1c0;
-  text-shadow: 0 0 8px rgba(85, 209, 192, 0.6);
-}
-
-.bg-card {
-  background-color: rgba(85, 209, 192, 0.2);
-  color: rgb(85, 209, 192);
-}
-
-.card {
-  min-height: 400px !important;
-  position: relative;
-}
-
-.card-button {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
 }
