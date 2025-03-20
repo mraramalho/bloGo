@@ -1,16 +1,16 @@
 {{ define "content" }}
-<h2>Blog</h2>
-<p>
+<h2 class="text-glow">Blog</h2>
+<p class="text-glow">
   Últimos artigos sobre desenvolvimento backend, automação e infraestrutura.
 </p>
 <div class="row">
   {{ range .Posts }}
   <div class="col-md-4 mb-3">
-    <div class="card bg-secondary text-light">
+    <div class="card bg-card text-light">
       <div class="card-body">
         <h5 class="card-title">{{ .Title }}</h5>
         <p class="card-text">{{ .Excerpt }}</p>
-        <a href="{{ .Slug }}" class="btn btn-light">Leia mais</a>
+        <a href="{{ .Slug }}" class="btn btn-tag card-button">Leia mais</a>
       </div>
     </div>
   </div>

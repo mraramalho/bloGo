@@ -1,6 +1,6 @@
 {{ define "content" }}
-<h2>Contato</h2>
-<p>Entre em contato para discutir um projeto.</p>
+<h2 class="text-glow">Contato</h2>
+<p class="text-glow">Entre em contato para discutir um projeto.</p>
 {{if .Error}}
 <div class="alert alert-danger">{{.Error}}</div>
 {{end}} {{if .Success}}
@@ -20,6 +20,6 @@
     <label class="form-label">Mensagem</label>
     <textarea class="form-control" name="message" rows="4" required></textarea>
   </div>
-  <button type="submit" class="btn btn-primary">Enviar</button>
+  <button type="submit" class="btn btn-tag">Enviar</button>
 </form>
 {{ end }}

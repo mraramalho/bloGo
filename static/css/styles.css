@@ -1,19 +1,12 @@
 html,
 body {
-  height: 100%;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   font-family: "Chakra Petch", sans-serif;
   font-weight: 300;
   font-style: normal;
-  background-color: #13141f;
-}
-
-.content {
-  flex: 1;
-  /* Faz o conteúdo ocupar o espaço restante */
-  padding-top: 56px;
-  /* Ajusta para não ficar escondido atrás da navbar */
+  background-color: rgb(15, 23, 42);
 }
 
 pre {
@@ -29,4 +22,132 @@ h4,
 h5,
 h6 {
   padding-bottom: 15px;
+}
+
+/* Estilo para texto selecionado */
+::selection {
+  background-color: rgba(
+    85,
+    209,
+    192,
+    0.3
+  ); /* Cor de fundo da seleção (versão semi-transparente do #55d1c0) */
+  color: #ffffff; /* Cor do texto selecionado */
+}
+
+/* Para navegadores Mozilla Firefox */
+::-moz-selection {
+  background-color: rgba(85, 209, 192, 0.3);
+  color: #ffffff;
+}
+
+.content {
+  flex: 1;
+  /* Faz o conteúdo ocupar o espaço restante */
+  padding-top: 56px;
+  z-index: 1;
+  /* Ajusta para não ficar escondido atrás da navbar */
+}
+
+.navbar {
+  z-index: 0;
+  background-color: transparent !important;
+  color: #55d1c0;
+}
+.navbar,
+.navbar a,
+.nav-link {
+  color: #55d1c0 !important;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  font-size: 46px;
+}
+
+/* Para links com hover na navbar */
+.navbar a:hover,
+.nav-link:hover {
+  color: #3aa697 !important; /* Uma versão mais escura da cor original */
+}
+
+/* Adicione isto ao seu arquivo CSS existente */
+.navbar-toggler {
+  border-color: #55d1c0 !important;
+}
+
+/* Esta é a parte que realmente colore os tracinhos */
+.navbar-toggler-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='%2355d1c0' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E") !important;
+}
+
+/* Para garantir que o toggler tenha um efeito de hover agradável */
+.navbar-toggler:focus,
+.navbar-toggler:hover {
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(85, 209, 192, 0.25) !important;
+}
+
+.btn {
+  min-width: 150px !important;
+}
+
+.btn-tag {
+  background-color: #122b39;
+  color: #55d1c0;
+}
+
+.btn-tag:hover {
+  background-color: #55d1c0;
+  color: #ffff;
+}
+
+.spotlight-container {
+  min-height: 100vh; /* Altura total menos a altura da navbar */
+}
+
+.spotlight {
+  position: fixed; /* Alterado para fixed para cobrir toda a página */
+  top: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none; /* Isso permite que os cliques passem através do spotlight */
+}
+
+.content {
+  z-index: 1; /* Garante que o conteúdo fique acima do spotlight */
+}
+
+/* Classe para texto com efeito de iluminação */
+.text-glow {
+  transition: color 0.3s ease;
+  position: relative;
+}
+
+/* Classe para caracteres individuais que receberão o efeito */
+.glow-char {
+  display: inline-block;
+  transition: color 0.2s ease;
+}
+
+/* Cores para o efeito de iluminação */
+.glow-active {
+  color: #55d1c0;
+  text-shadow: 0 0 8px rgba(85, 209, 192, 0.6);
+}
+
+.bg-card {
+  background-color: rgba(85, 209, 192, 0.2);
+  color: rgb(85, 209, 192);
+}
+
+.card {
+  min-height: 400px !important;
+  position: relative;
+}
+
+.card-button {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
 }
