@@ -1,3 +1,0 @@
-# Construindo um WebSocket com Go
-
-Esse é um projeto para construção de um websoket em go...

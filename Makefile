@@ -1,5 +1,5 @@
 run: build
-	@go run cmd\web\
+	@go run cmd/web/
 
 build:
-	@go build -o bin/web cmd\web\
+	@go build -o bin/web cmd/web/

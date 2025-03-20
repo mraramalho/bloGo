@@ -13,6 +13,8 @@ pre {
   padding: 30px;
   background-color: #13141f;
   font-family: Poppins, sans-serif;
+  position: relative; /* Garantir que o pre tenha posição relativa */
+  padding-bottom: 50px; /* Adicionar espaço para o botão na parte inferior */
 }
 
 h1,
@@ -58,14 +60,35 @@ h6 {
 .card {
   min-height: 400px !important;
   position: relative;
-  background-color: rgba(85, 209, 192, 0.1);
+  color: rgb(242, 253, 252);
   color: rgb(85, 209, 192);
+  background-color: rgba(85, 209, 192, 0.1);
 }
 
 .card-button {
   position: absolute;
   bottom: 10px;
   left: 10px;
+}
+
+.code-container {
+  position: relative;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.copy-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.copy-btn:hover {
+  opacity: 1;
+  background-color: #3aa697;
 }
 
 .content {
@@ -146,6 +169,10 @@ h6 {
   transition: transform 0.1s ease, box-shadow 0.1s ease;
   color: rgb(222, 238, 236) !important;
   perspective: 1000px;
+}
+
+.secondary-bg h5 {
+  color: rgb(85, 209, 192) !important;
 }
 
 .secondary-bg:hover {

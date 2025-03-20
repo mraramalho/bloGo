@@ -10,9 +10,17 @@ Espero que gostem!
 
 Qualquer dúvida ou sugestão, manda uma mensagem lá no meu [LinkedIn](https://www.linkedin.com/in/andreramalho-eng/) para batermos um papo.
 
---------
+---
 
 ## Criando um template base para o blog
+
+```{go}
+package main
+import "fmt"
+func main() {
+  fmt.Println("Hello, World!")
+}
+```
 
 ```{go}
 package main
