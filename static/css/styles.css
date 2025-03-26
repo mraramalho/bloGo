@@ -43,6 +43,14 @@ h6 {
   color: #ffffff;
 }
 
+.circular-image {
+  width: 200px !important;
+  height: 200px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  display: inline-block !important;
+}
+
 .btn {
   min-width: 150px !important;
 }
@@ -92,10 +100,9 @@ h6 {
 }
 
 .content {
-  flex: 1;
+  flex: 1 !important;
   /* Faz o conteúdo ocupar o espaço restante */
-  padding-top: 56px;
-  z-index: 1;
+  z-index: 1 !important;
   /* Ajusta para não ficar escondido atrás da navbar */
 }
 
@@ -124,10 +131,15 @@ h6 {
   color: #55d1c0 !important;
 }
 
+.main {
+  min-height: 100vh;
+}
+
 .navbar {
-  z-index: 0;
+  z-index: 1;
   background-color: transparent !important;
-  color: #55d1c0;
+  /* padding-left: 100px;
+  padding-right: 100px; */
 }
 .navbar,
 .navbar a,
@@ -182,7 +194,7 @@ h6 {
 }
 
 .spotlight-container {
-  min-height: 100vh;
+  min-height: calc(100vh - 56px);
 }
 
 .spotlight {

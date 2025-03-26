@@ -4,13 +4,15 @@
   Últimos artigos sobre desenvolvimento backend, automação e infraestrutura.
 </p>
 <div class="row">
-  {{ range .Posts }}
+  {{ range .PostCards }}
   <div class="col-md-4 mb-3">
     <div class="card secondary-bg text-light">
       <div class="card-body">
         <h5 class="card-title">{{ .Title }}</h5>
         <p class="card-text">{{ .Excerpt }}</p>
-        <a href="{{ .Slug }}" class="btn btn-tag card-button">Leia mais</a>
+        <a href="posts/{{ .Slug }}" class="btn btn-tag card-button"
+          >Leia mais</a
+        >
       </div>
     </div>
   </div>

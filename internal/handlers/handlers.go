@@ -1,16 +1,17 @@
 package handlers
 
 import (
+	"bytes"
 	"html/template"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
-	"time"
 
 	"github.com/mraramalho/bloGo/internal/config"
 	"github.com/mraramalho/bloGo/internal/render"
+	"github.com/yuin/goldmark"
+	"gopkg.in/yaml.v2"
 )
 
 // Post representa um artigo do blog
@@ -20,6 +21,7 @@ type Post struct {
 	Content template.HTML
 }
 
+// PostCard representa um card de um artigo do blog
 type PostCard struct {
 	Title   string
 	Excerpt string
@@ -83,55 +85,76 @@ func (m *Repository) ContactHandler(w http.ResponseWriter, r *http.Request) {
 
 func (m *Repository) BlogHandler(w http.ResponseWriter, r *http.Request) {
 	// Lógica para obter os posts do blog
-	files, err := filepath.Glob("posts/*.md")
+	// files, err := filepath.Glob("posts/*.md")
+	files, err := filepath.Glob("posts/*.yaml")
 	if err != nil {
 		http.Error(w, "Erro ao ler diretório de posts", http.StatusInternalServerError)
 		return
 	}
-	var posts []PostCard
-	for _, file := range files {
-		slug := strings.TrimPrefix(strings.TrimSuffix(file, ".md"), "posts\\")
-		posts = append(posts, PostCard{
-			Title:   strings.ToTitle(strings.ReplaceAll(slug, "-", " ")),
-			Excerpt: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor.",
-			Slug:    "posts/" + slug,
-		})
-	}
 
+	var postCards []PostCard
+	for _, file := range files {
+		yamlFile, err := os.ReadFile(file)
+		if err != nil {
+			http.Error(w, "Erro ao ler diretório yaml com dados dos posts", http.StatusInternalServerError)
+			return
+		}
+
+		// Crie uma nova instância para cada arquivo
+		yamlPostData := &config.YAMLPostData{}
+		err = yaml.Unmarshal(yamlFile, yamlPostData)
+		if err != nil {
+			http.Error(w, "Erro no parser do YAML", http.StatusInternalServerError)
+			return
+		}
+
+		slug := strings.TrimPrefix(strings.TrimSuffix(file, ".yaml"), "posts\\")
+		postCards = append(postCards, PostCard{
+			Title:   yamlPostData.Title,
+			Excerpt: yamlPostData.Excerpt,
+			Slug:    slug,
+		})
+
+		// Pass data to app config YAMLPostDataMap
+		m.App.YAMLPostDataMap[slug] = yamlPostData
+	}
 	render.RenderTemplate(w, "blog", map[string]any{
-		"Title": "Blog",
-		"Posts": posts,
+		"Title":     "Blog",
+		"PostCards": postCards,
 	})
 }
-
 func (m *Repository) ServiceHandler(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, "services", map[string]string{"Title": "Serviços"})
 }
 
 func (m *Repository) PostHandler(w http.ResponseWriter, r *http.Request) {
 	slug := strings.TrimPrefix(r.URL.Path, "/posts/")
-	filePath := "posts/" + slug + ".md"
+	// filePath := "posts/" + slug + ".md"
+	postData := m.App.YAMLPostDataMap[slug]
+	mdContent := postData.Content
 
-	content, err := ConvertMarkdownToHTML(filePath)
+	content, err := convertMarkdownToHTML(mdContent)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-
-	fileInfo, err := os.Stat(filePath)
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-	stat := fileInfo.Sys().(*syscall.Win32FileAttributeData)
-	cTime := time.Unix(0, stat.CreationTime.Nanoseconds())
-	creationTime := cTime.Format("02 de janeiro de 2006")
 
 	post := Post{
-		Title:   strings.ToTitle(strings.ReplaceAll(slug, "-", " ")), // Título baseado no slug
-		Date:    creationTime,
-		Content: template.HTML(content), // Inserindo HTML seguro
+		Title:   postData.Title,
+		Date:    postData.Created,
+		Content: template.HTML(content),
 	}
 
 	render.RenderTemplate(w, "post", post)
+}
+
+// ConvertMarkdownToHTML recebe uma string em formato .md e converte para HTML
+func convertMarkdownToHTML(mdContent string) (string, error) {
+	// Converte para HTML
+	var buf bytes.Buffer
+	if err := goldmark.Convert([]byte(mdContent), &buf); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }

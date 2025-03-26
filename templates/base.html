@@ -18,39 +18,39 @@
     />
     <link rel="icon" type="image/svg+xml" href="static\img\code.svg" />
   </head>
-  <body class="text-light">
+  <body class="text-light spotlight-container position-relative">
+    <nav class="navbar navbar-expand-lg ps-5 pe-5">
+      <a class="navbar-brand text-glow" href="/">&lt;andre&gt;</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link text-glow" href="/">home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-glow" href="/blog">blog</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-glow" href="/services">serviços</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-glow" href="/contact">contato</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
     <!-- Div spotlight apenas para o conteúdo principal -->
-    <div class="spotlight-container position-relative">
+    <div class="">
       <div class="spotlight position-absolute w-100 h-100"></div>
       <!-- Conteúdo da Página -->
-      <div class="container content position-relative">
-        <nav class="navbar navbar-expand-lg">
-          <a class="navbar-brand text-glow" href="/">&lt;andre&gt;</a>
-          <button
-            class="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarNav"
-          >
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-              <li class="nav-item">
-                <a class="nav-link text-glow" href="/">home</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link text-glow" href="/blog">blog</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link text-glow" href="/services">serviços</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link text-glow" href="/contact">contato</a>
-              </li>
-            </ul>
-          </div>
-        </nav>
+      <div class="main container content position-relative">
         {{ block "content" . }}{{ end }}
       </div>
     </div>
