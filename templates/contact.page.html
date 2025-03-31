@@ -4,11 +4,15 @@
 {{if .Error}}
 <div class="alert alert-danger">{{.Error}}</div>
 {{end}} {{if .Success}}
-<div class="alert alert-success">Sua mensagem foi enviada com sucesso!</div>
+<div class="alert alert-success">
+  Obrigado pelo contato!! Sua mensagem foi enviada com sucesso! Entrarei em
+  contato o mais breve possível.
+</div>
 {{end}}
 
 <form method="POST" action="/contact">
   <div class="mb-3">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
     <label class="form-label">Nome</label>
     <input
       type="text"

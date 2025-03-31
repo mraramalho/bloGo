@@ -8,21 +8,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/justinas/nosurf"
 	"github.com/mraramalho/bloGo/internal/config"
 	"github.com/mraramalho/bloGo/internal/render"
+
 	"github.com/yuin/goldmark"
 	"gopkg.in/yaml.v2"
 )
-
-// // Post representa um artigo do blog
-// type Post struct {
-// 	Title       string
-// 	Excerpt     string
-// 	Date        string
-// 	MDContent   string
-// 	HTMLContent template.HTML
-// 	Slug        string
-// }
 
 var Repo *Repository
 
@@ -51,31 +43,51 @@ func (m *Repository) AboutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *Repository) ContactHandler(w http.ResponseWriter, r *http.Request) {
+	data := make(map[string]interface{})
+	data["Title"] = "Contato"
+
+	// Verificar se há um parâmetro de sucesso na URL
+	if r.URL.Query().Get("success") == "true" {
+		data["Success"] = true
+	}
+
+	// Adicionar token CSRF ao contexto
+	data["CSRFToken"] = nosurf.Token(r)
+
 	if r.Method == http.MethodGet {
-		render.RenderTemplate(w, "contact", map[string]string{"Title": "Contato"})
+		render.RenderTemplate(w, "contact", data)
+		return
 	}
 
 	if r.Method == http.MethodPost {
 		name := r.FormValue("name")
 		email := r.FormValue("email")
 		message := r.FormValue("message")
+
+		// Validar os dados do formulário
+		if name == "" || email == "" || message == "" {
+			data["Error"] = "Por favor, preencha todos os campos"
+			data["Name"] = name
+			data["Email"] = email
+			data["Message"] = message
+			render.RenderTemplate(w, "contact", data)
+			return
+		}
+
 		// Lógica para enviar o email
 		err := sendEmail(name, email, message)
 		if err != nil {
 			// Handle the error by showing an error message to the user
-			render.RenderTemplate(w, "contact", map[string]interface{}{
-				"Title":   "Contato",
-				"Error":   "Não foi possível enviar o email. Por favor, tente novamente mais tarde.",
-				"Name":    name,
-				"Email":   email,
-				"Message": message,
-			})
+			data["Error"] = "Não foi possível enviar o email. Por favor, tente novamente mais tarde."
+			data["Name"] = name
+			data["Email"] = email
+			data["Message"] = message
+			render.RenderTemplate(w, "contact", data)
 			return
 		}
 
 		// Redirect on success
 		http.Redirect(w, r, "/contact?success=true", http.StatusSeeOther)
-
 	}
 }
 
@@ -88,7 +100,7 @@ func (m *Repository) BlogHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Erro ao ler diretório de posts", http.StatusInternalServerError)
 		return
 	}
-
+	var posts []config.Post
 	for _, file := range files {
 		yamlFile, err := os.ReadFile(file)
 		if err != nil {
@@ -115,12 +127,14 @@ func (m *Repository) BlogHandler(w http.ResponseWriter, r *http.Request) {
 
 		postData.HTMLContent = template.HTML(content)
 
-		// Pass data to app config YAMLPostDataMap
+		// Pass data to app config PostDataMap
 		m.App.PostDataMap[slug] = postData
+		posts = append(posts, *postData)
+
 	}
 	render.RenderTemplate(w, "blog", map[string]any{
 		"Title": "Blog",
-		"Posts": m.App.PostDataMap,
+		"Posts": posts,
 	})
 }
 
@@ -130,7 +144,6 @@ func (m *Repository) ServiceHandler(w http.ResponseWriter, r *http.Request) {
 
 func (m *Repository) PostHandler(w http.ResponseWriter, r *http.Request) {
 	slug := strings.TrimPrefix(r.URL.Path, "/posts/")
-	// filePath := "posts/" + slug + ".md"
 	postData := m.App.PostDataMap[slug]
 
 	render.RenderTemplate(w, "post", postData)
