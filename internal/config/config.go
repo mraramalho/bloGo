@@ -13,7 +13,7 @@ const (
 	cssVersion   = "1"
 	port         = ":8888"
 	inProduction = true
-	useCache     = true
+	useCache     = false
 )
 
 // Post representa um artigo do blog

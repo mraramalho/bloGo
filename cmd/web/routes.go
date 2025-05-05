@@ -12,9 +12,25 @@ import (
 func routes(app *config.AppConfig) http.Handler {
 	router := chi.NewRouter()
 
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+			w.Header().Set("Content-Security-Policy", `
+				default-src 'self';
+				style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net /static/;
+				script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net /static/;
+				font-src 'self' https://fonts.gstatic.com;
+				img-src 'self' data: /static/;
+			`)
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			w.Header().Set("X-Frame-Options", "DENY")
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://*", "http://*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedOrigins:   []string{"https://andreramalho.tech", "http://localhost:8888"},
+		AllowedMethods:   []string{"GET", "POST"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
