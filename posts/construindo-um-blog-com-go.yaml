@@ -1,35 +1,711 @@
 title: "Construindo um blog com Go"
 created: 26/03/2023
-excerpt: "Construindo um blog com Go"
+excerpt: |
+  Neste post, construímos do zero a estrutura de um blog em Go com suporte a 
+  arquivos Markdown.
+
+  Com essa estrutura, você tem um blog funcional e simples, com suporte a 
+  Markdown e fácil de manter — especialmente útil para projetos pessoais ou 
+  para aprender mais sobre Go na prática.
 content: |
   # Construindo um Blog em Go e Markdown
 
-  Fala Dev, tudo bem? Hoje vamos construir um blog em Go e Markdown.
+  Fala aí, tudo bem?
 
-  Esse post faz parte de uma série de posts que estou fazendo sobre Go.
+  Existem várias formas de construir um blog, muitas delas usando ferramentas 
+  prontas como Hugo, Jekyll, entre outras. Com certeza seria muito mais prático 
+  criar um blog com uma dessas ferramentas, mas qual a graça disso??
 
-  Existem várias formas de construir um blog, muitas delas usando ferramentas prontas como Hugo, Jekyll, entre outras. Com certeza seria muito mais prático criar um blog com uma dessas ferramentas, mas o objetivo aqui é aprender Go, então vamos começar a construção do blog do zero. 😁
+  Sendo assim, vamos começar a construção de um blog do zero... Pra ser sincero, 
+  quase do zero, porque usarei uma lib chamada [goldmark](https://github.com/yuin/goldmark) 
+  para converter arquivos Markdown em HTML.
 
-  Espero que gostem!
+  > Este guia assume que você já tem conhecimentos básicos em Go, Markdown,
+   HTML e CSS. Se ainda não estiver familiarizado com esses temas, recomendo 
+   dar uma olhada em tutoriais introdutórios antes de seguir.
 
-  Qualquer dúvida ou sugestão, manda uma mensagem lá no meu [LinkedIn](https://www.linkedin.com/in/andreramalho-eng/) para batermos um papo.
+  Espero que curta a jornada!
+
+  Qualquer dúvida ou sugestão, me chama no [LinkedIn](https://www.linkedin.com/in/andreramalho-eng/)
+  para trocarmos uma ideia. 
 
   ---
 
-  ## Criando um template base para o blog
+  ## O que vamos construir?
+
+  Neste post, construímos do zero a estrutura de um blog em Go com suporte a
+  arquivos Markdown, abordando os seguintes pontos:
+
+  - Criação de um servidor HTTP simples com a net/http;
+  - Organização de rotas e handlers em arquivos separados;
+  - Uso de html/template para renderizar páginas dinâmicas;
+  - Criação de uma estrutura de templates reutilizáveis (base.html);
+  - Conversão de arquivos .md em HTML usando a biblioteca Goldmark;
+  - Carregamento dinâmico de posts escritos em .yaml, com campos de metadados e conteúdo em Markdown;
+  - Implementação de handlers para listar posts e exibir posts individuais com base no slug da URL.
+
+  ## Criando um servidor HTTP com Go
+
+  Vamos começar com um servidor bem simples. No arquivo `main.go`, criaremos o seguinte código:
+
+  ```{go}
+
+  package main
+
+  import (
+    "log/slog"
+    "net/http"
+  )
+
+  func main() {
+    srv := http.Server{
+      Addr: ":8080",
+      Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        w.Write([]byte("Hello World"))
+      }),
+    }
+
+    slog.Info("Server started on http://localhost:8080")
+    if err := srv.ListenAndServe(); err != nil {
+      slog.Error("Server error", "error", err)
+      return
+    }
+  }
+
+  ```
+  Prefiro criar a instância do servidor manualmente, pois isso nos dá mais 
+  controle e facilita futuras refatorações.
+
+  Execute com `go run main.go` e acesse http://localhost:8080 — você verá um 
+  simples “Hello World”.
+
+  ## Criando rotas e middlewares
+
+  Agora vamos estruturar nossas rotas. Crie um arquivo chamado `routes.go`:
+
+  ```{go}
+
+  package main
+
+  import (
+    "net/http"
+  )
+
+  func NewRouter() *http.ServeMux {
+    router := http.NewServeMux()
+    
+    router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+      w.Write([]byte("Welcome! This is my blog"))
+    })
+
+    return router
+  }
+
+  ```
+  Depois, atualize o `main.go` para usar esse router:
 
   ```{go}
   package main
-  import "fmt"
+
+  import (
+    "log/slog"
+    "net/http"
+  )
+
   func main() {
-    fmt.Println("Hello, World!")
+
+    router := NewRouter()
+    srv := http.Server{
+      Addr:    ":8080",
+      Handler: router, //atualize aqui!
+    }
+
+    slog.Info("Server started on http://localhost:8080")
+    if err := srv.ListenAndServe(); err != nil {
+      slog.Error("Server error", "error", err)
+      return
+    }
   }
   ```
 
+  ## Separando os handlers
+
+  Vamos criar um handler específico para a home e deixar a estrutura mais 
+  modular. Crie o arquivo `handlers.go` com o seguinte conteúdo:
+
+  ```{go}	
+
+  package main
+
+  import (
+    "fmt"
+    "net/http"
+  )
+
+  func blogHandler(w http.ResponseWriter, r *http.Request) {
+    // Checks if method isn't GET and return a 405 status code
+    if r.Method != http.MethodGet {
+      w.WriteHeader(http.StatusMethodNotAllowed)
+      return
+    }
+
+    fmt.Fprintf(w, "Welcome! This is my blog")
+  }
+
+  ```
+  Agora, atualize o `routes.go` para usar esse handler:
+
   ```{go}
   package main
-  import "fmt"
-  func main() {
-    fmt.Println("Hello, World!")
+
+  import (
+    "net/http"
+  )
+
+  func NewRouter() *http.ServeMux {
+    router := http.NewServeMux()
+
+    router.HandleFunc("/", blogHandler)
+
+    return router
   }
   ```
+
+  Pronto! Agora você já tem uma estrutura básica, mas organizada.
+
+  ## Criando um renderizador de templates
+
+  Vamos adicionar suporte a templates HTML dinâmicos. Crie um arquivo `renderer.go`:
+
+  ```{go}	
+  package main
+
+  import (
+    "html/template"
+    "log/slog"
+    "net/http"
+  )
+
+  const (
+    templateDir = "templates/"
+    templateExt = ".page.html"
+  )
+
+  // renderTemplate renders a templates dinamically with given data.
+  func renderTemplate(w http.ResponseWriter, tmpl string, data any) {
+    tmplPath := templateDir + tmpl + templateExt
+    t, err := template.ParseFiles("templates/base.html", tmplPath)
+    if err != nil {
+      http.Error(w, "Erro loading template", http.StatusInternalServerError)
+      return
+    }
+
+    if err := t.Execute(w, data); err != nil {
+      slog.Error("Error rendering template", "error", err)
+      http.Error(w, "Erro rendering template", http.StatusInternalServerError)
+      return
+    }
+  }
+  ```
+
+  > Crie uma pasta chamada templates/ na raiz do projeto. 
+    Todos os templates (inclusive base.html) devem ficar lá dentro.
+
+  Essa função:
+
+  1. Monta o caminho completo do template;
+  2. Usa o base.html como layout principal para evitar repetição de código;
+  3. Executa o template com os dados fornecidos;
+  4. Retorna erro 500 em caso de falha.
+
+  ## Criando handlers dinâmicos para a página inicial e os posts
+
+  Vamos atualizar o `handlers.go` com suporte à renderização de posts:
+
+  ```{go}	
+  package main
+
+  import (
+    "fmt"
+    "log"
+    "net/http"
+    "strings"
+  )
+
+  // blogHandler handles GET requests to the root ("/") route.
+  // If a different method is used, it responds with a 405 status code.
+  // If any path other than "/" is requested, it responds with 404.
+  //
+  // It dynamically loads all posts from the "posts" directory
+  // on every GET request.
+  //
+  // Note: This handler does not implement caching. Posts are reloaded
+  // from disk on every request. While this is inefficient for high-traffic
+  // sites, the choice was intentional — for a personal blog, the simplicity
+  // and real-time updates outweigh the performance cost.
+  func blogHandler(w http.ResponseWriter, r *http.Request) {
+    // Checks if path isn't / and return a 404 status code
+    if r.URL.Path != "/" {
+      http.NotFound(w, r)
+      return
+    }
+
+    // Checks if method isn't GET and return a 405 status code
+    if r.Method != http.MethodGet {
+      log.Println("Method not allowed")
+      w.WriteHeader(http.StatusMethodNotAllowed)
+      w.Write([]byte("Method not allowed"))
+      return
+    }
+
+    if err := loadPosts(); err != nil {
+      log.Println("Error loading posts:", err)
+      w.WriteHeader(http.StatusInternalServerError)
+      w.Write([]byte(fmt.Sprintf("Error loading posts: %v", err)))
+      return
+    }
+
+    renderTemplate(w, "blog", posts)
+  }
+
+  // postHandler handles GET requests for individual blog posts using a 
+  // URL path in the format /post/{slug}.
+  //
+  // It first validates the HTTP method and returns a 405 Method Not Allowed
+  // if it's anything other than GET. Then, it loads the posts from disk.
+  //
+  // If the slug is missing (i.e., the path is just "/post/"), it redirects
+  // the user back to the home page with a 303 See Other status.
+  //
+  // If no post is found with the given slug, it returns a 404 Not Found.
+  //
+  // The post content is rendered using the "posts" template.
+  //
+  // Note: As with blogHandler, posts are reloaded on every request and not cached.
+  // This ensures that any changes in the post files are reflected immediately,
+  // but might impact performance on high-traffic blogs.
+  func postHandler(w http.ResponseWriter, r *http.Request) {
+    // Checks if method isn't GET and return a 405 status code
+    if r.Method != http.MethodGet {
+      log.Println("Method not allowed")
+      w.WriteHeader(http.StatusMethodNotAllowed)
+      w.Write([]byte("Method not allowed"))
+      return
+    }
+
+    if err := loadPosts(); err != nil {
+      log.Println("Error loading posts:", err)
+      w.WriteHeader(http.StatusInternalServerError)
+      w.Write([]byte(fmt.Sprintf("Error loading posts: %v", err)))
+      return
+    }
+
+    slug := strings.TrimPrefix(r.URL.Path, "/post/")
+    // Se o slug estiver vazio, redireciona para a página principal
+    if slug == "" {
+      http.Redirect(w, r, "/", http.StatusSeeOther)
+      return
+    }
+
+    post, ok := posts[slug]
+    if !ok {
+      log.Println("Post not found")
+      w.WriteHeader(http.StatusNotFound)
+      w.Write([]byte("Post not found"))
+      return
+    }
+    renderTemplate(w, "posts", post)
+
+  }
+
+  ```
+
+  > Os posts são carregados do disco a cada request. Isso não é ideal para performance, 
+  mas facilita atualizações em tempo real durante o desenvolvimento de um blog pessoal.
+
+  Para que os handlers criados no blog funcionem corretamente, é necessário 
+  carregar os posts que estão salvos em arquivos .yaml. Para isso, criaremos um novo 
+  arquivo chamado `posts.go`, onde centralizamos funções de suporte relacionadas ao 
+  carregamento e tratamento dos posts.
+
+  ```{go}
+  package main
+
+  import (
+    "bytes"
+    "fmt"
+    "html/template"
+    "os"
+    "path/filepath"
+    "strings"
+
+    "github.com/yuin/goldmark"
+    "gopkg.in/yaml.v2"
+  )
+
+  var posts map[string]*Post
+
+  // Post represents a blog post loaded from a YAML file.
+  //
+  // Fields:
+  //   - Title:       The title of the blog post.
+  //   - Excerpt:     A short summary or preview of the post.
+  //   - Date:        The creation date of the post (from the YAML field `created`).
+  //   - MDContent:   The original post content written in Markdown (from the YAML field `content`).
+  //   - HTMLContent: The HTML-rendered version of the Markdown content. Filled at runtime.
+  //   - Slug:        The URL-friendly identifier derived from the filename (without extension).
+  //
+  // This struct is populated by parsing `.yaml` files in the `posts/` directory
+  // and is used to render blog posts dynamically in templates.
+  type Post struct {
+    Title       string `yaml:"title"`
+    Excerpt     string `yaml:"excerpt"`
+    Date        string `yaml:"created"`
+    MDContent   string `yaml:"content"`
+    HTMLContent template.HTML
+    Slug        string
+  }
+
+  // markdownToHTML converts a Markdown string into HTML.
+  //
+  // It uses the Goldmark library (a CommonMark-compliant Markdown parser) to parse and convert
+  // the Markdown content into HTML. The result is returned as a string.
+  //
+  // Parameters:
+  //   - markdown: A string containing Markdown-formatted content.
+  //
+  // Returns:
+  //   - The HTML representation of the Markdown content.
+  //   - An error, if the conversion fails.
+  //
+  // This function is used to transform post content (written in Markdown) into HTML
+  // before rendering it in templates.
+  func markdownToHTML(markdown string) (string, error) {
+    md := goldmark.New()
+    var buf bytes.Buffer
+    if err := md.Convert([]byte(markdown), &buf); err != nil {
+      return "", err
+    }
+    return buf.String(), nil
+  }
+
+  // loadPosts loads all blog posts from the "posts/" directory.
+  //
+  // It searches for all `.yaml` files and parses each one into a `Post` struct.
+  // For every file, it performs the following steps:
+  //   1. Reads the YAML content.
+  //   2. Unmarshals the content into a Post struct.
+  //   3. Extracts the slug from the filename (removing the ".yaml" extension).
+  //   4. Converts the Markdown content (`MDContent`) to HTML and stores it in `HTMLContent`.
+  //   5. Stores the post in the global `posts` map, using the slug as the key.
+  //
+  // If any step fails (e.g. reading a file, parsing YAML, converting markdown),
+  // the function returns an error, halting the loading process.
+  //
+  // Note: The global `posts` map is cleared and rebuilt on every call.
+
+  func loadPosts() error {
+    posts = make(map[string]*Post)
+    files, err := filepath.Glob("posts/*.yaml")
+    if err != nil {
+      return fmt.Errorf("Error reading files: %w", err)
+    }
+
+    for _, file := range files {
+      yamlFile, err := os.ReadFile(file)
+      if err != nil {
+        return fmt.Errorf("Error reading file: %w", err)
+      }
+
+      postData := &Post{}
+      err = yaml.Unmarshal(yamlFile, postData)
+      if err != nil {
+        return fmt.Errorf("Error unmarshalling file: %w", err)
+      }
+
+      slug := strings.TrimSuffix(filepath.Base(file), ".yaml")
+      postData.Slug = slug
+
+      htmlContent, err := markdownToHTML(postData.MDContent)
+      if err != nil {
+        return fmt.Errorf("Error converting markdown to HTML: %w", err)
+      }
+      postData.HTMLContent = template.HTML(htmlContent)
+      posts[slug] = postData
+    }
+
+    return nil
+  }
+  ```
+
+  Neste arquivo, definimos a estrutura Post, que representa um post do blog com 
+  campos como título, resumo, data de criação, conteúdo em Markdown, conteúdo 
+  em HTML (gerado em tempo de execução) e o slug (identificador da URL baseado 
+  no nome do arquivo).
+
+  A função loadPosts percorre todos os arquivos .yaml na pasta posts/, 
+  interpreta o conteúdo YAML, converte o texto em Markdown para HTML 
+  com a biblioteca goldmark, e salva os posts em um mapa global chamado posts. 
+  Esse mapa usa o slug como chave, facilitando o acesso rápido a cada post com 
+  base na URL.
+
+  Toda vez que loadPosts é chamada, o mapa é recriado do zero — uma decisão 
+  consciente, já que em blogs pessoais normalmente não há um volume alto de 
+  requisições, e isso garante que qualquer mudança nos arquivos .yaml seja 
+  refletida imediatamente. Ainda assim, deixo claro que em ambientes onde o 
+  tráfego seja intenso, o ideal seria usarmos um mecanismo de cache.
+
+  Além disso, criamos a função markdownToHTML, responsável por converter o 
+  conteúdo dos posts de Markdown para HTML antes de renderizá-los nos templates.
+
+  Conforme mencionado, essa aplicação depende de uma estrutura de pastas para a
+  execução correta. Portanto, é importante que você crie a pasta posts/ na raiz do
+  projeto e coloque os arquivos .yaml dos posts lá dentro. Assim como a pasta templates/.
+
+  ## Atualizando nosso router
+
+  Vamos atualizar nosso arquivo `router.go` para incluir os handlers de posts:
+
+  ```{go}
+  package main
+
+  import (
+    "net/http"
+  )
+
+  func NewRouter() *http.ServeMux {
+    router := http.NewServeMux()
+
+    router.HandleFunc("/", blogHandler)
+    router.HandleFunc("/post/", postHandler)
+
+    return router
+  }
+
+  ```
+
+  ## Criando nossos templates HTML
+
+  Agora, vamos criar os templates HTML que serão usados para renderizar os posts.
+  Dentro da pasta templates/, crie os seguintes arquivos:
+
+  - `base.html`: Define o layout base do site.
+  - `blog.page.html`: Renderiza a página inicial do blog.	
+  - `post.page.html`: Renderiza uma página individual de um post.
+
+  Aqui está um exemplo de como ficaria o arquivo base.html:
+  ```{html}
+  <!-- templates/base.html -->
+  <!DOCTYPE html>
+  <html>
+
+      <head>
+          <meta charset="utf-8">
+          <meta http-equiv="X-UA-Compatible" content="IE=edge">
+          <title>Meu Blog</title>
+          <meta name="description" content="">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+          <link rel="stylesheet" href="\static\css\styles.css">
+      </head>
+
+      <body>
+          <nav class="navbar navbar-expand-lg ps-5 pe-5">
+              <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                  <span class="navbar-toggler-icon"></span>
+              </button>
+              <div class="collapse navbar-collapse" id="navbarNav">
+                  <ul class="navbar-nav ms-auto">
+                      <li class="nav-item">
+                          <a class="nav-link text-glow" href="/blog">blog</a>
+                      </li>
+                  </ul>
+              </div>
+          </nav>
+
+          <div class="container">
+              {{ block "content" . }}{{ end }}
+          </div>
+
+          <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+      </body>
+
+  </html>
+
+  ```
+
+  Esse template base define um layout comum para todas as páginas do blog. 
+  Ele inclui o Bootstrap para estilização e um menu de navegação.
+
+  Observe que dentro do template temos uma referência a um arquivo CSS com o caminho 
+  \static\css\styles.css. Sendo assim, é importante que criemos uma nova pasta na
+  raiz do projeto chamada \static\ e dentro dela uma pasta \css\ com o arquivo styles.css.
+
+  ```{css}
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    background-color: rgb(226, 214, 198);
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    font-weight: 100;
+    font-family: "Lato";
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p {
+    font-family: "Lato";
+    color: black;
+  }
+
+  .card {
+    background-color: rgb(110, 108, 107) !important;
+  }
+
+  ```
+
+  Esse é um arquivo CSS simples que define algumas cores e estilos básicos para o blog e
+  podemos alterá-lo conforme necessário.
+
+  Agora criaremos os templates para as páginas do blog e dos posts individuais.
+
+  ```{html}
+  <!-- templates/blog.page.html -->
+  {{ define "content" }}
+  <h2 class="title-highlight">Blog</h2>
+  <p class="text-glow">
+      Últimos artigos...
+  </p>
+  <div class="row">
+      {{ range $_, $post := . }}
+      <div class="col-md-4 mb-3">
+          <div class="card shadow-sm p-3">
+              <div>
+                  <h5>{{ $post.Title }}</h5>
+                  <p>{{ $post.Excerpt }}</p>
+                  <a href="post/{{ $post.Slug }}" class="btn btn-primary">Leia mais</a>
+              </div>
+          </div>
+      </div>
+      {{ end }}
+  </div>
+  {{end}}
+
+  ```
+  Esse template renderiza a página inicial do blog, exibindo uma lista de posts com
+  seus títulos, resumos e links para acessar o conteúdo completo.
+
+  ```{html}
+  <!-- templates/post.page.html -->
+  {{ define "content" }}
+  <div class="main">
+    <h2>{{ .Title }}</h2>
+    <p>{{ .Date }}</p>
+    <hr />
+    <div>{{ .HTMLContent }}</div>
+    <a href="/" class="btn btn-outline-light mt-3 mb-5">← Voltar</a>
+  </div>
+  {{ end }}
+
+  ```
+
+  Esse template renderiza uma página individual de um post, exibindo seu título, data de
+  criação e conteúdo HTML renderizado. 
+
+    > *Atenção ao nome dos arquivos. Todos os templates, exceto o base.html, devem
+    ter o sufixo .page.html.*
+
+  Agora precisaremos atualizar nosso arquivo `routes.go` para incluir um servidor de
+  arquivos estáticos e servir os arquivos CSS (e JavaaScript, se necessário) para os templates.
+
+  ## Atualizando o arquivo `routes.go`
+
+  ```{go}
+  package main
+
+  import (
+    "net/http"
+  )
+    func NewRouter() *http.ServeMux {
+    router := http.NewServeMux()
+
+    router.HandleFunc("/", blogHandler)
+    router.HandleFunc("/post/", postHandler)
+
+    fs := http.FileServer(http.Dir("static"))
+    router.Handle("/static/", http.StripPrefix("/static/", fs))
+
+    return router
+  }
+  ```
+
+  ## Criando um post em YAML
+
+  Por fim, precisamos criar um arquivo YAML com o conteúdo do post.
+
+  Para isso criaremos um arquivo `meu-primeiro-post.yaml` dentro da pasta \posts\:
+
+  ```{yaml}
+  title: "Meu primeiro Post"
+  created: 26/03/2023
+  excerpt: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
+  content: |
+    # Este é meu primeiro poste num blog feito com Go.
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+  ```
+  Usaremos esse modelo para criar novos posts! 😁
+
+  ## Executando o blog
+
+  Pronto! Agora podemos usar os templates para renderizar as páginas do blog e 
+  dos posts individuais.
+
+  E nosso blog está pronto! 
+
+  Executando o blog:
+
+  ```{bash}
+  go run main.go
+  ```
+  Acesse o blog em http://localhost:8080/
+
+  Para colocá-lo em produção, recomendo usar uma VPS, no entanto, como fazer isso 
+  foge ao escopo deste tutorial. Sendo assim, faremos isso em uma outra postagem.
+
+  ## Conclusão
+
+  Construir um blog do zero em Go não é apenas uma forma divertida de aprender 
+  a linguagem — é também uma maneira eficaz de entender como funciona o 
+  básico da web: HTTP, rotas, renderização de templates e manipulação de arquivos.
+
+  Você encontrará o código completo deste tutorial no meu s
+  [GitHub](https://github.com/mraramalho/criando-um-blog-com-go).
+
+  Nos próximos posts, podemos adicionar mais funcionalidades como comentários, 
+  RSS, temas, deploy e integração com GitHub Actions.
+
+  Se curtiu, me chama no [LinkedIn](https://www.linkedin.com/in/andreramalho-eng/) 
+  para trocar ideia ou sugerir melhorias.
+
+  Até a próxima! 🚀
+
+  ---

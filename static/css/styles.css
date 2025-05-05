@@ -9,6 +9,14 @@ body {
   background-color: #0f172a;
 }
 
+section {
+  height: 100vh;
+  scroll-snap-align: start;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 pre {
   padding: 30px;
   background-color: #13141f;
@@ -66,30 +74,47 @@ h6 {
 }
 
 .card {
+  min-height: 600px !important;
+}
+
+.blog-card {
   min-height: 400px !important;
+  padding: 30px;
+  border-radius: 10px;
+}
+
+.card,
+.blog-card {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
   color: rgb(242, 253, 252);
-  color: rgb(85, 209, 192);
   background-color: rgba(85, 209, 192, 0.1);
 }
 
-.card-body {
+.card-body,
+.blog-card-body {
   flex-grow: 1.3;
   display: flex;
   flex-direction: column;
 }
 
-.card-body ol {
+.card-body ol,
+.blog-card-body ol {
   flex-grow: 1;
 }
 
-.card-button {
+.card-button,
+.blog-card-button {
   /* position: absolute; */
   /* bottom: 10px; */
   /* left: 10px; */
   margin-top: auto;
+}
+
+.card-title,
+.blog-card-title {
+  color: rgb(85, 209, 192);
 }
 
 .code-container {
@@ -143,10 +168,15 @@ h6 {
 }
 
 .main {
+  padding-top: 100px;
   min-height: 100vh;
 }
 
 .navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
   z-index: 1;
   background-color: transparent !important;
   /* padding-left: 100px;
@@ -225,4 +255,30 @@ h6 {
 .text-glow {
   transition: color 0.3s ease;
   position: relative;
+}
+
+span.highlight {
+  background: #55d1c040;
+  padding: 2px 4px;
+  border-radius: 2px;
+  box-decoration-break: clone;
+  z-index: 2;
+}
+
+.title-highlight {
+  color: rgb(85, 209, 192);
+}
+
+.arrow-blip {
+  animation: blip 1s infinite;
+}
+
+@keyframes blip {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }

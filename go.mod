@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.65
 	github.com/aws/aws-sdk-go-v2/service/ses v1.30.1
 	github.com/go-chi/chi/v5 v5.2.1
+	github.com/go-chi/cors v1.2.1
 	github.com/joho/godotenv v1.5.1
 	github.com/justinas/nosurf v1.1.1
 	github.com/yuin/goldmark v1.7.8

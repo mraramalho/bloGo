@@ -12,7 +12,7 @@ const (
 	version      = "1.0.0"
 	cssVersion   = "1"
 	port         = ":8888"
-	inProduction = false
+	inProduction = true
 	useCache     = true
 )
 

@@ -138,9 +138,9 @@ func (m *Repository) BlogHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (m *Repository) ServiceHandler(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, "services", map[string]string{"Title": "Serviços"})
-}
+// func (m *Repository) ServiceHandler(w http.ResponseWriter, r *http.Request) {
+// 	render.RenderTemplate(w, "services", map[string]string{"Title": "Serviços"})
+// }
 
 func (m *Repository) PostHandler(w http.ResponseWriter, r *http.Request) {
 	slug := strings.TrimPrefix(r.URL.Path, "/posts/")
@@ -149,7 +149,8 @@ func (m *Repository) PostHandler(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, "post", postData)
 }
 
-// ConvertMarkdownToHTML receives a string with markdown content and returns a string with HTML content
+// ConvertMarkdownToHTML receives a string with markdown content and returns 
+// a string with HTML content
 func convertMarkdownToHTML(mdContent string) (string, error) {
 	// Converte para HTML
 	var buf bytes.Buffer

@@ -1,47 +1,49 @@
 {{ define "content" }}
-<h2 class="text-glow">Contato</h2>
-<p class="text-glow">Entre em contato para discutir um projeto.</p>
-{{if .Error}}
-<div class="alert alert-danger">{{.Error}}</div>
-{{end}} {{if .Success}}
-<div class="alert alert-success">
-  Obrigado pelo contato!! Sua mensagem foi enviada com sucesso! Entrarei em
-  contato o mais breve possível.
-</div>
-{{end}}
+<div class="main">
+  <h2 class="title-highlight">Contato</h2>
+  <p class="text-glow">Entre em contato para discutir um projeto.</p>
+  {{if .Error}}
+  <div class="alert alert-danger">{{.Error}}</div>
+  {{end}} {{if .Success}}
+  <div class="alert alert-success">
+    Obrigado pelo contato!! Sua mensagem foi enviada com sucesso! Entrarei em
+    contato o mais breve possível.
+  </div>
+  {{end}}
 
-<form method="POST" action="/contact">
-  <div class="mb-3">
-    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
-    <label class="form-label">Nome</label>
-    <input
-      type="text"
-      class="form-control secondary-bg"
-      style="border: none !important"
-      name="name"
-      required
-    />
-  </div>
-  <div class="mb-3">
-    <label class="form-label">E-mail</label>
-    <input
-      type="email"
-      class="form-control secondary-bg"
-      style="border: none !important"
-      name="email"
-      required
-    />
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Mensagem</label>
-    <textarea
-      class="form-control secondary-bg"
-      style="border: none !important"
-      name="message"
-      rows="4"
-      required
-    ></textarea>
-  </div>
-  <button type="submit" class="btn btn-tag">Enviar</button>
-</form>
+  <form method="POST" action="/contact">
+    <div class="mb-3">
+      <input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
+      <label class="form-label">Nome</label>
+      <input
+        type="text"
+        class="form-control secondary-bg"
+        style="border: none !important"
+        name="name"
+        required
+      />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">E-mail</label>
+      <input
+        type="email"
+        class="form-control secondary-bg"
+        style="border: none !important"
+        name="email"
+        required
+      />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Mensagem</label>
+      <textarea
+        class="form-control secondary-bg"
+        style="border: none !important"
+        name="message"
+        rows="4"
+        required
+      ></textarea>
+    </div>
+    <button type="submit" class="btn btn-tag">Enviar</button>
+  </form>
+</div>
 {{ end }}

@@ -1,7 +1,9 @@
 {{ define "content" }}
-<h2>{{ .Title }}</h2>
-<p class="text-light">{{ .Date }}</p>
-<hr />
-<div class="">{{ .HTMLContent }}</div>
-<a href="/blog" class="btn btn-outline-light mt-3 mb-5">← Voltar</a>
+<div class="main">
+  <h2>{{ .Title }}</h2>
+  <p class="text-light">{{ .Date }}</p>
+  <hr />
+  <div class="">{{ .HTMLContent }}</div>
+  <a href="/blog" class="btn btn-outline-light mt-3 mb-5">← Voltar</a>
+</div>
 {{ end }}
