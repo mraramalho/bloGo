@@ -25,6 +25,7 @@ COPY --from=builder /app/bloGo .
 COPY --from=builder /app/posts ./posts
 COPY --from=builder /app/templates ./templates
 COPY --from=builder /app/static ./static
+COPY --from=builder /app/.env ./.env
 
 # Expor a porta usada pela aplicação
 EXPOSE 8080
