@@ -116,7 +116,8 @@ func (m *Repository) BlogHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		slug := strings.TrimPrefix(strings.TrimSuffix(file, ".yaml"), "posts\\")
+		file = filepath.ToSlash(file)
+		slug := strings.TrimSuffix(filepath.Base(file), ".yaml")
 		postData.Slug = slug
 
 		content, err := convertMarkdownToHTML(postData.MDContent)
@@ -149,7 +150,7 @@ func (m *Repository) PostHandler(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, "post", postData)
 }
 
-// ConvertMarkdownToHTML receives a string with markdown content and returns 
+// ConvertMarkdownToHTML receives a string with markdown content and returns
 // a string with HTML content
 func convertMarkdownToHTML(mdContent string) (string, error) {
 	// Converte para HTML
