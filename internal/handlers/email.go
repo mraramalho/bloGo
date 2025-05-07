@@ -89,6 +89,6 @@ func sendEmail(name, email, message string) error {
 		return fmt.Errorf("erro ao enviar e-mail: %v", err)
 	}
 
-	log.Println("E-mail enviado com sucesso! ID:", *resp.MessageId)
+	log.Printf("E-mail enviado com sucesso! \nID: %v\nNome: %s\nEmail: %s\nMensagem: %s\n", *resp.MessageId, name, email, message)
 	return nil
 }
