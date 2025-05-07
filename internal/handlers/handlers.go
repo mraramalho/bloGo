@@ -2,9 +2,16 @@ package handlers
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"html/template"
+	"io"
+	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -160,4 +167,66 @@ func convertMarkdownToHTML(mdContent string) (string, error) {
 	}
 
 	return buf.String(), nil
+}
+
+// WebHookHandler handles the webhook logic for the GitHub repository.
+func (m *Repository) WebHookHandler(w http.ResponseWriter, r *http.Request) {
+
+	githubSecret := os.Getenv("GITHUB_WEBHOOK_SECRET")
+	// Verifica se o método da requisição é POST
+	if r.Method != http.MethodPost {
+		http.Error(w, "Método not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Lê o corpo da requisição
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Erro ao ler body", http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	// Valida a assinatura
+	signature := r.Header.Get("X-Hub-Signature-256")
+	if signature == "" || !validateSignature(githubSecret, body, signature) {
+		http.Error(w, "Assinatura inválida", http.StatusUnauthorized)
+		return
+	}
+
+	var payload struct {
+		Ref string `json:"ref"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "JSON Decoding Error", http.StatusBadRequest)
+		return
+	}
+
+	if payload.Ref == "ref/heads/main" {
+		// Executa o comando git pull
+		cmd := exec.Command("git", "-C", "./posts/", "pull")
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Printf("git pull error: %v\nOutput: %s", err, string(output))
+			http.Error(w, "Failed to pull", http.StatusInternalServerError)
+			return
+		}
+		log.Println("Posts atualizados com sucesso.")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+	w.Write([]byte("Ignorado"))
+
+}
+
+func validateSignature(secret string, body []byte, signature string) bool {
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write(body)
+	expectedMAC := mac.Sum(nil)
+	expectedSig := "sha256=" + hex.EncodeToString(expectedMAC)
+	return hmac.Equal([]byte(expectedSig), []byte(signature))
 }

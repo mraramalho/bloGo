@@ -46,6 +46,7 @@ func routes(app *config.AppConfig) http.Handler {
 	router.Get("/blog", handlers.Repo.BlogHandler)
 	router.Get("/posts/{slug}", handlers.Repo.PostHandler)
 	// router.Get("/services", handlers.Repo.ServiceHandler)
+	router.Post("/webhook", handlers.Repo.WebHookHandler)
 
 	fs := http.FileServer(http.Dir("static"))
 	router.Handle("/static/*", http.StripPrefix("/static/", fs))
