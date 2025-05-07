@@ -1,4 +1,4 @@
-title: "Construindo um blog com Go"
+title: "Construindo um blog com Go e Markdown"
 created: 05/05/2025
 excerpt: |
   Neste post, construímos do zero a estrutura de um blog em Go com suporte a 
