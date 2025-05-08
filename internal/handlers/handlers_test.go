@@ -6,15 +6,30 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/joho/godotenv"
 	"github.com/mraramalho/bloGo/internal/config"
 )
 
 var app = config.NewApp()
+
+func TestMain(m *testing.M) {
+	basePath, _ := os.Getwd()
+	projectRoot := filepath.Join(basePath, filepath.ToSlash("../../"))
+	envPath := filepath.Join(projectRoot, ".env")
+
+	if err := godotenv.Load(envPath); err != nil {
+		log.Printf("[Warning] Failed to load .env file: %v", err)
+	}
+
+	os.Exit(m.Run())
+}
 
 func TestWebhookHandler(t *testing.T) {
 
