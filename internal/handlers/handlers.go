@@ -41,12 +41,19 @@ func NewHandlers(r *Repository) {
 
 func (m *Repository) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	m.App.Session.Put(r.Context(), "remore_ip", r.RemoteAddr)
-	render.RenderTemplate(w, "index", map[string]string{"Title": "Home"})
+	if err := render.RenderTemplate(w, "index", map[string]string{"Title": "Home"}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 }
 
 func (m *Repository) AboutHandler(w http.ResponseWriter, r *http.Request) {
 	// perform some logic
-	render.RenderTemplate(w, "services", map[string]string{"Title": "Serviços"})
+	if err := render.RenderTemplate(w, "services", map[string]string{"Title": "Serviços"}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (m *Repository) ContactHandler(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +69,10 @@ func (m *Repository) ContactHandler(w http.ResponseWriter, r *http.Request) {
 	data["CSRFToken"] = nosurf.Token(r)
 
 	if r.Method == http.MethodGet {
-		render.RenderTemplate(w, "contact", data)
+		if err := render.RenderTemplate(w, "contact", data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		return
 	}
 
@@ -77,7 +87,10 @@ func (m *Repository) ContactHandler(w http.ResponseWriter, r *http.Request) {
 			data["Name"] = name
 			data["Email"] = email
 			data["Message"] = message
-			render.RenderTemplate(w, "contact", data)
+			if err := render.RenderTemplate(w, "contact", data); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			return
 		}
 
@@ -89,7 +102,10 @@ func (m *Repository) ContactHandler(w http.ResponseWriter, r *http.Request) {
 			data["Name"] = name
 			data["Email"] = email
 			data["Message"] = message
-			render.RenderTemplate(w, "contact", data)
+			if err = render.RenderTemplate(w, "contact", data); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			return
 		}
 
@@ -104,14 +120,14 @@ func (m *Repository) BlogHandler(w http.ResponseWriter, r *http.Request) {
 
 	files, err := filepath.Glob("posts/*.yaml")
 	if err != nil {
-		http.Error(w, "Erro ao ler diretório de posts", http.StatusInternalServerError)
+		http.Error(w, "posts directory reading error", http.StatusInternalServerError)
 		return
 	}
 	var posts []config.Post
 	for _, file := range files {
 		yamlFile, err := os.ReadFile(file)
 		if err != nil {
-			http.Error(w, "Erro ao ler diretório yaml com dados dos posts", http.StatusInternalServerError)
+			http.Error(w, "YAML directory reading error", http.StatusInternalServerError)
 			return
 		}
 
@@ -119,7 +135,7 @@ func (m *Repository) BlogHandler(w http.ResponseWriter, r *http.Request) {
 		postData := &config.Post{}
 		err = yaml.Unmarshal(yamlFile, postData)
 		if err != nil {
-			http.Error(w, "Erro no parser do YAML", http.StatusInternalServerError)
+			http.Error(w, "YAML parser error", http.StatusInternalServerError)
 			return
 		}
 
@@ -140,10 +156,13 @@ func (m *Repository) BlogHandler(w http.ResponseWriter, r *http.Request) {
 		posts = append(posts, *postData)
 
 	}
-	render.RenderTemplate(w, "blog", map[string]any{
+	if err := render.RenderTemplate(w, "blog", map[string]any{
 		"Title": "Blog",
 		"Posts": posts,
-	})
+	}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // func (m *Repository) ServiceHandler(w http.ResponseWriter, r *http.Request) {
@@ -154,7 +173,10 @@ func (m *Repository) PostHandler(w http.ResponseWriter, r *http.Request) {
 	slug := strings.TrimPrefix(r.URL.Path, "/posts/")
 	postData := m.App.PostDataMap[slug]
 
-	render.RenderTemplate(w, "post", postData)
+	if err := render.RenderTemplate(w, "post", postData); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // ConvertMarkdownToHTML receives a string with markdown content and returns
@@ -175,20 +197,20 @@ func (m *Repository) WebHookHandler(w http.ResponseWriter, r *http.Request) {
 	githubSecret := os.Getenv("GITHUB_WEBHOOK_SECRET")
 
 	if githubSecret == "" {
-		http.Error(w, "Configuração inválida", http.StatusInternalServerError)
+		http.Error(w, "invalid config", http.StatusInternalServerError)
 		return
 	}
 
 	// Verifica se o método da requisição é POST
 	if r.Method != http.MethodPost {
-		http.Error(w, "Método not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	// Lê o corpo da requisição
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Erro ao ler body", http.StatusInternalServerError)
+		http.Error(w, "body reading error", http.StatusInternalServerError)
 		return
 	}
 	defer r.Body.Close()
@@ -199,7 +221,7 @@ func (m *Repository) WebHookHandler(w http.ResponseWriter, r *http.Request) {
 	// Valida a assinatura
 	signature := r.Header.Get("X-Hub-Signature-256")
 	if signature == "" || !validateSignature(githubSecret, body, signature) {
-		http.Error(w, "Assinatura inválida", http.StatusUnauthorized)
+		http.Error(w, "invalid signature", http.StatusUnauthorized)
 		return
 	}
 
@@ -211,17 +233,17 @@ func (m *Repository) WebHookHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "JSON Decoding Error", http.StatusBadRequest)
 		return
 	}
-	
+
 	if payload.Ref == "refs/heads/main" {
 		// Executa o comando git pull
 		cmd := exec.Command("git", "pull")
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			log.Printf("git pull error: %v\nOutput: %s", err, string(output))
-			http.Error(w, "Failed to pull", http.StatusInternalServerError)
+			http.Error(w, "failed to pull", http.StatusInternalServerError)
 			return
 		}
-		log.Println("Posts atualizados com sucesso.")
+		log.Println("Posts successfully updated.")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 		return

@@ -12,34 +12,47 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/joho/godotenv"
 	"github.com/mraramalho/bloGo/internal/config"
 )
 
 var app = config.NewApp()
+var repo *Repository
 
 func TestMain(m *testing.M) {
 	basePath, _ := os.Getwd()
 	projectRoot := filepath.Join(basePath, filepath.ToSlash("../../"))
-	envPath := filepath.Join(projectRoot, ".env")
 
+	// Muda o diretório de execução
+	if err := os.Chdir(projectRoot); err != nil {
+		log.Fatalf("Erro ao mudar diretório para o root do projeto: %v", err)
+	}
+
+	envPath := filepath.Join(projectRoot, ".env")
 	if err := godotenv.Load(envPath); err != nil {
 		log.Printf("[Warning] Failed to load .env file: %v", err)
 	}
+
+	app.Session = scs.New()
+	app.Session.Lifetime = 24 * time.Hour
+	app.Session.Cookie.Secure = false
+
+	repo = NewRepo(app)
+
+	NewHandlers(repo)
 
 	os.Exit(m.Run())
 }
 
 func TestWebhookHandler(t *testing.T) {
 
-	repo := NewRepo(app)
-
-	NewHandlers(repo)
-
 	payload := map[string]string{
 		"ref": "refs/heads/main",
 	}
+
 	body, err := json.Marshal(payload)
 	if err != nil {
 		t.Fatal(err)
@@ -65,4 +78,24 @@ func TestWebhookHandler(t *testing.T) {
 		t.Errorf("esperava status 200 OK, recebeu %d", rr.Code)
 	}
 
+}
+
+func TestHomeHandler(t *testing.T) {
+	req, err := http.NewRequest("GET", "/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, err := app.Session.Load(req.Context(), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	repo.HomeHandler(rr, req)
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
 }
