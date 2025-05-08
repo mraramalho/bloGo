@@ -12,6 +12,7 @@ import (
 var app = config.NewApp()
 
 func main() {
+
 	app.Session.Lifetime = 24 * time.Hour
 	app.Session.Cookie.Persist = true
 	app.Session.Cookie.SameSite = http.SameSiteLaxMode

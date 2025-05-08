@@ -14,6 +14,7 @@ func sessionLoad(next http.Handler) http.Handler {
 // noSurf adds a CSRF cookie in the response
 func noSurf(next http.Handler) http.Handler {
 	csrfHandler := nosurf.New(next)
+	csrfHandler.ExemptGlob("/webhook")
 
 	csrfHandler.SetBaseCookie(http.Cookie{
 		HttpOnly: true,

@@ -173,6 +173,12 @@ func convertMarkdownToHTML(mdContent string) (string, error) {
 func (m *Repository) WebHookHandler(w http.ResponseWriter, r *http.Request) {
 
 	githubSecret := os.Getenv("GITHUB_WEBHOOK_SECRET")
+
+	if githubSecret == "" {
+		http.Error(w, "Configuração inválida", http.StatusInternalServerError)
+		return
+	}
+
 	// Verifica se o método da requisição é POST
 	if r.Method != http.MethodPost {
 		http.Error(w, "Método not allowed", http.StatusMethodNotAllowed)
@@ -186,6 +192,9 @@ func (m *Repository) WebHookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
+
+	// Restaura o corpo para o próximo uso (decodificação)
+	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	// Valida a assinatura
 	signature := r.Header.Get("X-Hub-Signature-256")
@@ -202,10 +211,10 @@ func (m *Repository) WebHookHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "JSON Decoding Error", http.StatusBadRequest)
 		return
 	}
-
-	if payload.Ref == "ref/heads/main" {
+	
+	if payload.Ref == "refs/heads/main" {
 		// Executa o comando git pull
-		cmd := exec.Command("git", "-C", "./posts/", "pull")
+		cmd := exec.Command("git", "pull")
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			log.Printf("git pull error: %v\nOutput: %s", err, string(output))
